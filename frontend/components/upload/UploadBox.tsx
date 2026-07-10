@@ -8,11 +8,14 @@ import { UploadCloud, FileText, X } from "lucide-react";
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE } from "@/constants/upload";
 import { CsvPreview } from "@/types/csv";
 import PreviewTable from "@/components/preview/PreviewTable";
+import PreviewSummary from "@/components/preview/PreviewSummary";
+import Button from "@/components/common/Button";
 
 export default function UploadBox() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<CsvPreview | null>(null);
   const [error, setError] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
@@ -63,15 +66,26 @@ export default function UploadBox() {
     accept: ACCEPTED_FILE_TYPES,
   });
 
+  const handleConfirmImport = async () => {
+
+    setIsProcessing(true);
+
+    // Backend API call will go here later
+
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 2000);
+
+  };
+
   return (
     <div className="mx-auto max-w-5xl">
       <div
         {...getRootProps()}
-        className={`cursor-pointer rounded-2xl border-2 border-dashed p-10 transition-all duration-300 ${
-          isDragActive
+        className={`cursor-pointer rounded-2xl border-2 border-dashed p-10 transition-all duration-300 ${isDragActive
             ? "border-blue-600 bg-blue-50"
             : "border-slate-300 bg-white hover:border-blue-500"
-        }`}
+          }`}
       >
         <input {...getInputProps()} />
 
@@ -129,6 +143,27 @@ export default function UploadBox() {
 
       {preview && (
         <PreviewTable preview={preview} />
+      )}
+
+      {preview && selectedFile && (
+        <>
+          <PreviewSummary
+            fileName={selectedFile.name}
+            rows={preview.rows.length}
+            columns={preview.headers.length}
+          />
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              onClick={handleConfirmImport}
+              disabled={isProcessing}
+            >
+              {isProcessing
+                ? "Processing..."
+                : "Confirm Import"}
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );
