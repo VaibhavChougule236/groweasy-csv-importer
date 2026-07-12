@@ -15,7 +15,11 @@ export const processImport = asyncHandler(
       });
     }
 
+    console.log("Controller Started");
+
     const result = await processCsvImport(req.file.path);
+
+    console.log("Controller Finished");
 
     return res.json(
       successResponse(

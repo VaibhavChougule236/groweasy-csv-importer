@@ -9,23 +9,87 @@ const ai = new GoogleGenAI({
   apiKey: env.GEMINI_API_KEY,
 });
 
+// export async function processBatch(
+//   records: CsvRecord[]
+// ): Promise<AIResponse> {
+//   try {
+//     const prompt = buildPrompt(records);
+
+//     console.log(`Sending ${records.length} records to Gemini...`);
+
+//     const response = await ai.models.generateContent({
+//       model: env.GEMINI_MODEL,
+//       contents: prompt,
+//       config: {
+//         responseMimeType: "application/json",
+//       },
+//     });
+
+//     const text = response.text;
+
+//     if (!text) {
+//       throw new Error("Gemini returned an empty response.");
+//     }
+
+//     console.log("Gemini response received.");
+
+//     return parseGeminiJson<AIResponse>(text);
+//   } catch (error) {
+//     console.error("Gemini Error:", error);
+//     throw error;
+//   }
+// }
+
 export async function processBatch(
   records: CsvRecord[]
 ): Promise<AIResponse> {
   const prompt = buildPrompt(records);
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.5-flash",
-    contents: prompt,
-  });
+  console.log(`Sending ${records.length} records to Gemini...`);
 
-  const text = response.text;
+  const MAX_RETRIES = 3;
 
-  if (!text) {
-    throw new Error("Gemini returned an empty response.");
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: env.GEMINI_MODEL,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          maxOutputTokens: 8192,
+          temperature: 0,
+        },
+      });
+
+      const text = response.text;
+
+      if (!text) {
+        throw new Error("Gemini returned an empty response.");
+      }
+
+      console.log("Gemini response received.");
+
+      return parseGeminiJson<AIResponse>(text);
+    } catch (error: any) {
+      if (
+        (error?.status === 429 || error?.status === 503) &&
+        attempt < MAX_RETRIES
+      ) {
+        console.log(
+          `Retry ${attempt}/${MAX_RETRIES} after Gemini error (${error.status})...`
+        );
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, 2000 * attempt)
+        );
+
+        continue;
+      }
+
+      console.error("Gemini Error:", error);
+      throw error;
+    }
   }
 
-  const parsed = parseGeminiJson(text) as AIResponse;
-
-  return parsed;
+  throw new Error("Unexpected retry failure.");
 }

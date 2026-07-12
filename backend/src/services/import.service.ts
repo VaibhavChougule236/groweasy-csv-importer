@@ -7,7 +7,7 @@ import { createBatches } from "../utils/batch";
 
 import { ImportResult } from "../types/import.types";
 
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 15;
 
 export async function processCsvImport(
   filePath: string
