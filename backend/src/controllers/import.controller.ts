@@ -1,9 +1,13 @@
 import { Request, Response } from "express";
+
 import { asyncHandler } from "../utils/asyncHandler";
 import { successResponse } from "../utils/response";
 
+import { processCsvImport } from "../services/import.service";
+
 export const processImport = asyncHandler(
   async (req: Request, res: Response) => {
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -11,12 +15,14 @@ export const processImport = asyncHandler(
       });
     }
 
-    return res.status(200).json(
-      successResponse("File uploaded successfully.", {
-        fileName: req.file.filename,
-        originalName: req.file.originalname,
-        size: req.file.size,
-      })
+    const result = await processCsvImport(req.file.path);
+
+    return res.json(
+      successResponse(
+        "CSV imported successfully.",
+        result
+      )
     );
+
   }
 );
