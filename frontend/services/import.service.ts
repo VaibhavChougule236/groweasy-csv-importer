@@ -1,22 +1,17 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+import api from "@/api/axios";
 
-export async function processCsv(file: File) {
+import { ApiResponse } from "@/types/api";
+import { ImportResult } from "@/types/import";
+
+export async function importCsv(file: File) {
   const formData = new FormData();
 
   formData.append("file", file);
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/import/process`,
-    {
-      method: "POST",
-      body: formData,
-    }
+  const response = await api.post<ApiResponse<ImportResult>>(
+    "/import/process",
+    formData
   );
 
-  if (!response.ok) {
-    throw new Error("Failed to process CSV.");
-  }
-
-  return response.json();
+  return response.data;
 }

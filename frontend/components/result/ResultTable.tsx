@@ -1,4 +1,4 @@
-import { CRMLead } from "@/types/crm";
+import { CRMLead } from "@/types/import";
 
 interface Props {
   title: string;
